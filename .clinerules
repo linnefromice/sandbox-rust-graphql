@@ -1,0 +1,17 @@
+# .clinerules
+
+This document lists the guidelines that Cline must follow when performing AI-assisted coding.
+
+## Implementation Guidelines
+
+- Keep the design information documented in the `/docs` directory in mind.
+  - If there is a need for an update, propose the necessary changes.
+- Integrate tests alongside the implementation.
+
+## Interacting with AI Assistant
+
+- Use English to get the answers you seek while saving tokens
+
+## Rules Update
+
+- If you encounter recurring patterns or implementation practices during command processing, propose updates to either the `.clinerules` file or `/docs/coding_rule.md` file.

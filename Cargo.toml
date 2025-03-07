@@ -4,3 +4,10 @@ version = "0.1.0"
 edition = "2021"
 
 [dependencies]
+async-graphql = "7.0.15"
+async-graphql-axum = "7.0.15"
+axum = "0.8.1"
+diesel = { version = "2.2.8", features = ["sqlite"] }
+dotenvy = "0.15.7"
+serde = { version = "1.0.218", features = ["derive"] }
+tokio = "1.43.0"
