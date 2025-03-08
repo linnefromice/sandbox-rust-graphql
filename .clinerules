@@ -7,6 +7,8 @@ This document lists the guidelines that Cline must follow when performing AI-ass
 - Keep the design information documented in the `/docs` directory in mind.
   - If there is a need for an update, propose the necessary changes.
 - Integrate tests alongside the implementation.
+  - For testing, only test code is required
+  - Unless otherwise instructed, there is no need to check the behavior of the process in a browser or with curl.
 
 ## Interacting with AI Assistant
 
