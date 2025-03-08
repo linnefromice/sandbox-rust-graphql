@@ -1,5 +1,5 @@
 use async_graphql::{Context, Object, Result};
-use diesel::prelude::*;
+use diesel::{prelude::*, QueryableByName};
 
 use crate::db::{models::ChatMessage, DbPool};
 use crate::db::schema::chat_messages;
@@ -70,21 +70,29 @@ mod tests {
     #[tokio::test]
     async fn test_chat_messages_query() {
         // Set up an in-memory SQLite database for testing
-        let manager = ConnectionManager::<SqliteConnection>::new(":memory:");
+        // Use a file-based database for testing to ensure persistence across connections
+        let manager = ConnectionManager::<SqliteConnection>::new("file:test_db?mode=memory&cache=shared");
         let pool = r2d2::Pool::builder()
             .build(manager)
             .expect("Failed to create test db pool");
 
-        // Create the table in the in-memory database
+        // Run migrations to create the tables
         let mut conn = pool.get().unwrap();
-        diesel::sql_query(
-            "CREATE TABLE chat_messages (
-                id INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT,
-                content TEXT NOT NULL,
-                sender TEXT NOT NULL,
-                timestamp TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
-            )"
-        ).execute(&mut conn).unwrap();
+        use diesel_migrations::MigrationHarness;
+        use crate::db::migrations::MIGRATIONS;
+        conn.run_pending_migrations(MIGRATIONS).expect("Failed to run migrations");
+        
+        // Verify the table exists
+        #[derive(QueryableByName)]
+        struct TableName {
+            #[diesel(sql_type = diesel::sql_types::Text)]
+            name: String,
+        }
+        
+        let tables = diesel::sql_query("SELECT name FROM sqlite_master WHERE type='table' AND name='chat_messages'")
+            .load::<TableName>(&mut conn)
+            .unwrap();
+        assert!(!tables.is_empty(), "chat_messages table was not created by migrations");
 
         // Insert test data
         let test_message = NewChatMessage {
@@ -106,6 +114,7 @@ mod tests {
         // Test chatMessages query
         let query = "{ chatMessages { id content sender } }";
         let res = schema.execute(query).await;
+        println!("res: {:?}", res);
         assert!(res.is_ok());
 
         let json_str = serde_json::to_string(&res.data).unwrap();

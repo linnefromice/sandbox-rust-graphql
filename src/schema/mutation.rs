@@ -1,6 +1,6 @@
 use async_graphql::{Context, Object, Result};
 use chrono::Utc;
-use diesel::prelude::*;
+use diesel::{prelude::*, QueryableByName};
 
 use crate::db::{models::{ChatMessage, NewChatMessage}, DbPool};
 use crate::db::schema::chat_messages;
@@ -50,36 +50,38 @@ mod tests {
     #[tokio::test]
     async fn test_create_chat_message() {
         // Set up an in-memory SQLite database for testing
-        let manager = ConnectionManager::<SqliteConnection>::new(":memory:");
+        // Use a file-based database for testing to ensure persistence across connections
+        let manager = ConnectionManager::<SqliteConnection>::new("file:test_mutation_db?mode=memory&cache=shared");
         let pool = r2d2::Pool::builder()
             .build(manager)
             .expect("Failed to create test db pool");
 
-        // Create the table in the in-memory database
+        // Run migrations to create the tables
         let mut conn = pool.get().unwrap();
-        diesel::sql_query(
-            "CREATE TABLE chat_messages (
-                id INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT,
-                content TEXT NOT NULL,
-                sender TEXT NOT NULL,
-                timestamp TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
-            )"
-        ).execute(&mut conn).unwrap();
+        use diesel_migrations::MigrationHarness;
+        use crate::db::migrations::MIGRATIONS;
+        conn.run_pending_migrations(MIGRATIONS).expect("Failed to run migrations");
+        
+        // Verify the table exists
+        #[derive(QueryableByName)]
+        struct TableName {
+            #[diesel(sql_type = diesel::sql_types::Text)]
+            name: String,
+        }
+        
+        let tables = diesel::sql_query("SELECT name FROM sqlite_master WHERE type='table' AND name='chat_messages'")
+            .load::<TableName>(&mut conn)
+            .unwrap();
+        assert!(!tables.is_empty(), "chat_messages table was not created by migrations");
 
         // Create a schema with the pool as context data
         let schema = Schema::build(Query::default(), Mutation::default(), EmptySubscription::default())
             .data(pool.clone())
             .finish();
 
-        // Insert test message using the same approach as the mutation
+        // Define test message content
         let content = "Hello, world!";
         let sender = "Test User";
-        
-        let new_message = NewChatMessage {
-            content: content.to_string(),
-            sender: sender.to_string(),
-            timestamp: Utc::now().naive_utc(),
-        };
 
         // Execute the mutation
         let query = format!(r#"
@@ -93,6 +95,7 @@ mod tests {
         "#, content, sender);
 
         let res = schema.execute(query).await;
+        println!("res: {:?}", res);
         assert!(res.is_ok());
 
         // Convert to JSON and verify

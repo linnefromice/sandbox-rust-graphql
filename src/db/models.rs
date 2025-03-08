@@ -1,5 +1,5 @@
 use async_graphql::SimpleObject;
-use chrono::{NaiveDateTime, Utc};
+use chrono::NaiveDateTime;
 use diesel::prelude::*;
 use serde::{Deserialize, Serialize};
 
