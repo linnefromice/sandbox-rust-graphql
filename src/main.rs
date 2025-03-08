@@ -1,3 +1,4 @@
+mod db;
 mod schema;
 
 use async_graphql::http::GraphiQLSource;
@@ -8,6 +9,8 @@ use axum::{
     routing::get,
     Router,
 };
+use db::migrations::MIGRATIONS;
+use diesel_migrations::MigrationHarness;
 use schema::AppSchema;
 use std::net::SocketAddr;
 
@@ -24,8 +27,15 @@ async fn graphql_playground() -> impl IntoResponse {
 
 #[tokio::main]
 async fn main() {
-    // Create the schema
-    let schema = schema::create_schema();
+    // Set up the database connection pool
+    let pool = db::establish_connection_pool();
+
+    // Run migrations
+    let mut conn = pool.get().expect("Failed to get DB connection");
+    conn.run_pending_migrations(MIGRATIONS).expect("Failed to run migrations");
+    
+    // Create the schema with the database pool
+    let schema = schema::create_schema_with_db_pool(pool);
 
     // Build our application with routes
     let app = Router::new()

@@ -7,8 +7,11 @@ edition = "2021"
 async-graphql = "7.0.15"
 async-graphql-axum = "7.0.15"
 axum = "0.8.1"
-diesel = { version = "2.2.8", features = ["sqlite"] }
+chrono = { version = "0.4.35", features = ["serde"] }
+diesel = { version = "2.2.8", features = ["sqlite", "chrono", "r2d2"] }
+diesel_migrations = { version = "2.1.0", features = ["sqlite"] }
 dotenvy = "0.15.7"
+r2d2 = "0.8.10"
 serde = { version = "1.0.218", features = ["derive"] }
 serde_json = "1.0.114"
 tokio = { version = "1.43.0", features = ["full"] }
