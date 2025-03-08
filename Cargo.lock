@@ -70,6 +70,7 @@ dependencies = [
  "async-trait",
  "base64",
  "bytes",
+ "chrono",
  "fast_chemail",
  "fnv",
  "futures-timer",
@@ -88,6 +89,7 @@ dependencies = [
  "static_assertions_next",
  "tempfile",
  "thiserror 1.0.69",
+ "time",
 ]
 
 [[package]]

@@ -1,5 +1,5 @@
 use async_graphql::SimpleObject;
-use chrono::NaiveDateTime;
+use chrono::{NaiveDateTime, Utc};
 use diesel::prelude::*;
 use serde::{Deserialize, Serialize};
 
@@ -12,6 +12,7 @@ pub struct ChatMessage {
     pub id: i32,
     pub content: String,
     pub sender: String,
+    #[graphql(name = "timestamp")]
     pub timestamp: NaiveDateTime,
 }
 
