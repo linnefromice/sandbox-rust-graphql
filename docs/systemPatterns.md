@@ -34,17 +34,31 @@ pub struct ChatMessage {
 
 Two queries are implemented for retrieving chat messages:
 
-1. `chatMessages`: Retrieves all chat messages, ordered by timestamp in descending order.
+1. `chatMessages`: Retrieves paginated chat messages using cursor-based pagination
    ```graphql
    query {
-     chatMessages {
-       id
-       content
-       sender
-       timestamp
+     chatMessages(first: 10, after: "cursor") {
+       edges {
+         node {
+           id
+           content
+           sender
+           timestamp
+         }
+         cursor
+       }
+       pageInfo {
+         hasNextPage
+         endCursor
+       }
      }
    }
    ```
+
+   - `first`: Number of messages to return (default: 20, max: 100)
+   - `after`: Base64 encoded cursor for pagination
+   - Returns a connection object with edges containing nodes and cursors
+   - Includes pageInfo with hasNextPage and endCursor
 
 2. `chatMessage(id: Int!)`: Retrieves a single chat message by its ID.
    ```graphql
@@ -76,6 +90,7 @@ mutation {
 ## Implementation Details
 
 - SQLite is used as the database with Diesel ORM for database interactions
+- Cursor-based pagination uses timestamps encoded in base64
 - The chat message model implements `SimpleObject` for GraphQL schema generation
 - Migrations are automatically run when the server starts
 - Tests are included for both queries and mutations
